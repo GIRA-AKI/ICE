@@ -1,9 +1,11 @@
 'use client'
 import ServerAction from './ServerAction';
 import { useEffect, useState } from 'react';
-import { useCookies } from 'next-client-cookies';
 import { useRouter } from 'next/navigation';
-
+// import VisibilityIcon from '@mui/icons-material/Visibility';
+// import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { Alert, AlertTitle, FormControl, IconButton, Input, InputAdornment, InputLabel, TextField } from '@mui/material';
+import Swal from 'sweetalert2';
 
 // const Get_token =  () => {
 //     const cookieStore = cookies()
@@ -16,10 +18,12 @@ interface Message {
 }
 
 const page = () => {
+    const [showPassword, setShowPassword] = useState(false);
+    const handleClickShowPassword = () => setShowPassword(!showPassword);
+    const handleMouseDownPassword = () => setShowPassword(!showPassword);
     // const [status ,setStatus] = useState<any>('')
     const [state ,setState] = useState<any>({})
     const route = useRouter()
-    const cookies = useCookies();
     // console.log(cookies.get('token'))
 
     // useEffect(()=>{
@@ -30,38 +34,59 @@ const page = () => {
     <div className='w-[350px] mx-auto my-5'>
 
         <form action={ async (formData:FormData) => {
-            // wait to get data from ServerAction 
+            // wait to get data from ServerAction
             const data_this = await ServerAction(formData);
 
             // set state of value
             setState(data_this);
             if(data_this.status == 200) {
-                setTimeout(()=> {route.push('/home')},2000)
+                setTimeout(()=> {route.push('/')},2000)
             }
-        }} >
-            <div className="form-floating mb-3">
-            <input
-                type="text"
-                className="form-control"
-                id="input1"
-                placeholder="name@example.com"
-                name='username'
-            />
-            <label htmlFor="input1">Username</label>
+            else{
+                
+            }
+        }} className='form-login'>
+            <h2 className='text-center'>LOGIN</h2>
+            <div>
+                <TextField
+                    className="input-field "
+                    name='username'
+                    label='Username'
+                    variant="outlined"
+                    type="text"
+                    />
             </div>
 
-            <div className="form-floating mb-3">
-            <input
-                type="text"
-                className="form-control"
-                id="input1"
-                placeholder="name@example.com"
+            <div >
+                <TextField
+                className="input-field"
                 name='password'
-            />
-            <label htmlFor="input1">Password</label>
+                label='Password'
+                variant="outlined"
+                type={showPassword ? "text" : "password"} // <-- This is where the magic happens
+                InputProps={{ // <-- This is where the toggle button is added.
+                    endAdornment: (
+                    <InputAdornment position="end">
+                        <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        >
+                        {showPassword ? "o" :"0"}
+                        </IconButton>
+                    </InputAdornment>
+                    )
+                }}
+                />
             </div>
-            <p className="mb-0">Message : {state?.message}</p>
-            <button type="submit" className='btn btn-primary float-end'>Login</button>
+            <div className="input-field">
+                <button type="submit" className='btn btn-primary  float-end'>Login</button>
+            <div>{ (state.message) && (
+                <Alert severity="warning" className='w-full'>
+                    {state.message}
+                </Alert>
+            ) }</div>
+            </div>
         </form>
 
     </div>

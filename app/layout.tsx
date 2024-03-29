@@ -24,9 +24,9 @@ export default function RootLayout({
       <body className={inter.className}>
         
         <div className=" ">
-          <CookiesProvider>
+          {/* <CookiesProvider> */}
             {children}
-          </CookiesProvider>
+          {/* </CookiesProvider> */}
         </div>
       </body>
     </html>

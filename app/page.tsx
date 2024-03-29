@@ -1,113 +1,508 @@
-import Image from "next/image";
+'use client'
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import Navbar from './components/Navbar'
+import Func_add_data from './Fucntion/Func_add_data'
+import { redirect, useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
+import Cookies from 'js-cookie'
+import Loading from './components/Loading'
+import navbar from './components/Navbar'
 
-export default function Home() {
+const page = () => {
+  const router = useRouter();
+  const [data, setData] = useState<any>([{}])
+  const [_id, set_id] = useState<any>({})
+  const [status_fetch, setstatus_fetch] = useState<boolean>(false)
+  const [att , setAtt] = useState<any>([{}])
+  const [secret_id, set_setcret_id ] = useState<any>()
+  const allField = useRef<HTMLFormElement>(null)
+
+  const [Title, set_Title] = useState("")
+  const [Description, set_Description] = useState("")
+  const [Excerpt, set_Excerpt] = useState("")
+  const [Date_publish, set_Date_publish] = useState<any>("")
+  const [status, set_status] = useState<string>("")
+  const [new_b ,set_new_b] = useState<string>("")
+  const [isToken ,set_isToken] = useState<Boolean>(false)
+  
+  const listData = async () => {
+   
+    const token = Cookies.get('token')
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Bearer " + token);
+    const requestOptions: any = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow"
+    };
+
+    await fetch('https://dashboard.myhuahin.co/api/blogs/',requestOptions).then(res => res.json()).then((d) => {
+      setData(d.data)
+    })
+
+  }
+
+
+  /**
+  |--------------------------------------------------
+  | check token
+  |--------------------------------------------------
+  */
+ useEffect(() => {
+
+  const checkToken = async () => {
+    const res = Cookies.get('token'); 
+    if(res){
+      await set_isToken(true)
+    }
+    else{ 
+      await set_isToken(false)
+    }
+  }
+  checkToken()
+  listData()
+
+ },[router,Cookies.get('token')])
+
+
+
+/**
+|--------------------------------------------------
+|   detail function
+|--------------------------------------------------
+*/
+  const moreMore = async (ID: any) => {
+    set_setcret_id(ID)
+    setstatus_fetch(true);
+    const token = Cookies.get('token')
+ 
+
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Bearer " + token);
+
+    const requestOptions: any = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow"
+    };
+
+    // console.log(ID)
+    // console.log("Bearer " + token)
+
+    const rem = await fetch(`https://dashboard.myhuahin.co/api/blogs/${ID}`, requestOptions)
+    const ram = await rem.json()
+    set_id(ram?.data)
+
+    setAtt(ram?.data?.attributes)
+
+    set_Title(ram?.data?.attributes.Title)
+    set_Description(ram?.data?.attributes.Description)
+    set_Excerpt(ram?.data?.attributes.Excerpt)
+    set_status(ram?.data?.attributes.Status)
+    set_Date_publish(ram?.data?.attributes.Date_publish)
+    // // console.log(Date_publish)
+    // console.log("---------->" + status)
+    set_new_b(ram?.data?.attributes.Status)
+    setstatus_fetch(false);
+  }
+
+
+  {
+    /**
+    |--------------------------------------------------
+    | Delete function
+    |--------------------------------------------------
+    */
+  }
+  const func_delete = async(ID:any) =>{
+    setstatus_fetch(true);
+
+    const token = Cookies.get('token')
+
+    
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Bearer " + token);
+
+    const raw = "";
+
+    const requestOptions:any = {
+      method: "DELETE",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+
+    fetch("https://dashboard.myhuahin.co/api/blogs/"+ ID, requestOptions)
+      .then((response) => response.text())
+      // .then((result) => console.log(result))
+      .catch((error) => console.error(error));
+
+    setstatus_fetch(false);
+
+    setTimeout(()=> {
+      listData()
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Data was deleted",
+        showConfirmButton: true
+        // timer: 1500
+      });
+    },100)
+  } 
+
+
+  {
+    /**
+    |--------------------------------------------------
+    | Edit function
+    |--------------------------------------------------
+    */
+  }
+  const func_edit = (formData:FormData) => {
+
+    if(formData.get('Status')?.toString() != "true" && formData.get('Status')?.toString()  != "false"){
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "Data incorrected",
+        showConfirmButton: true
+        // timer: 1500
+      });
+      return
+    }
+    
+    const token = Cookies.get('token')
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", "Bearer " + token);
+
+
+    const today = new Date()
+    const date = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,"0")}-${today.getDate().toString().padStart(2 ,'0')}`
+    const hours = `${today.getHours().toString().padStart(2,"0")}:${today.getMinutes().toString().padStart(2,"0")}:00.000Z`
+
+
+    // console.log(hours)
+    let raw = JSON.stringify({})           
+    if(formData.get('Status')?.toString() != new_b?.toString()){
+      raw = JSON.stringify({
+        "data": {
+          "Title": Title,
+          "Description": Description ,
+          "Excerpt": Excerpt,
+          "Status": status,
+          "Date_publish" : (status === "true") ? `${date}T${hours}` : null
+        }
+      });
+
+    }
+    else{
+      raw = JSON.stringify({
+        "data": {
+          "Title": Title,
+          "Description": Description ,
+          "Excerpt": Excerpt,
+        }
+      });
+    }
+
+
+    const requestOptions:any = {
+      method: "PUT",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+
+    fetch("https://dashboard.myhuahin.co/api/blogs/"+ secret_id, requestOptions)
+      .then((response) => response.text())
+      // .then((result) => console.log(result))
+      .catch((error) => console.error(error));
+
+
+      setTimeout(()=> {
+        listData()
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: "Data was updated",
+          showConfirmButton: true
+          // timer: 1500
+        });
+      },500)
+  }
+
+  {
+    /**
+    |--------------------------------------------------
+    | function for format time
+    |--------------------------------------------------
+    */
+  }
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    const formattedDate = `${date.getFullYear()} - ${(date.getMonth() + 1).toString().padStart(2, '0')} - ${date.getDate().toString().padStart(2, '0')}`;
+    
+    const formattedTime = `${(date.getHours() - 7).toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+    if(dateString == null) return "- -"
+    return `${formattedDate} ${formattedTime}`;
+  }
+
+  useEffect(() => {
+    typeof document !== undefined ? require('bootstrap/dist/js/bootstrap') : null
+  }, [])
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <Navbar />
+      <div className="container p-5">
+
+        <div className="  ">
+          {
+          (isToken) && (
+            <button className='btn-success btn float-end my-2' data-bs-toggle="modal" data-bs-target="#staticBackdrop_add"  >Add</button>
+          )}
+        </div>
+
+        <table className="table  text-center">
+          <thead className='table-dark'>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Title</th>
+              <th scope="col">Description</th>
+              <th scope="col">Excerpt</th>
+              <th scope="col">Status</th>
+              <th scope="col">Date_publish</th>
+              <th scope="col">Options</th>
+            </tr>
+          </thead>
+          <tbody>
+              
+            {
+              data.map((e: any, index: number) => {
+                const att = e?.attributes
+                return (
+                  <tr key={index}>
+                    <th scope="row">{e.id}</th>
+                    <td>{att?.Title}</td>
+                    <td>{att?.Description}</td>
+                    <td>{att?.Excerpt}</td>
+                    <td >
+                      {(att?.Status.toString() == "true") && (<div className="opacity-90 bg-green-500 mx-auto rounded-full w-4 h-4"></div>) }
+                      {(att?.Status.toString() == "false") && (<div className="opacity-50  bg-slate-500 mx-auto rounded-full  w-4 h-4"></div>) }
+                    </td>
+                    <td>{formatDate(att?.Date_publish)}</td>
+                    <td className='w-[300px]' >
+                      <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop" className='btn btn-info m-2'>Info</button>
+
+                      {
+                        (isToken) && (
+                          <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop_edit" className='btn btn-warning m-2'>Edit</button>
+                        ) 
+                      }
+
+                      {
+                        (isToken) && (
+                          <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop_del" className='btn btn-danger m-2'>Delete</button>
+                        )
+                      }
+                    </td>
+                  </tr>)
+              })
+            }
+
+
+          </tbody>
+        </table>
+
+
+      </div>
+
+
+      {
+        /**
+        |--------------------------------------------------
+        | Modal for detail 
+        |--------------------------------------------------
+        */
+      }
+      <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content"> 
+            <div className="modal-header bg-info ">
+              <h5 className="modal-title" id="staticBackdropLabel">Detail</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {status_fetch == false && ( 
+              <div className='row'>
+                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'>  {_id.id} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'>  
+                  {(status.toString() == "true") ? "Published" : "Unpublished" }
+                 </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Date_publish  </div>   <div className='col-9 fw-normal'>  {att.Date_publish} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {att.createdAt} </div>
+              </div>
+              )
+              }
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+
+
+      {
+        /**
+        |--------------------------------------------------
+        | Modal for Edit 
+        |--------------------------------------------------
+        */
+      }
+      <div className="modal fade" id="staticBackdrop_edit" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <form className="modal-content"   action={(formData:FormData) => { func_edit(formData) }} > 
+            <div className="modal-header bg-warning  ">
+              <h5 className="modal-title" id="staticBackdropLabel">Edit </h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              <div className='row' id="add_data" >
+                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'> <input type="text" name="ID" placeholder={_id.id} id=""  className=" form-control " disabled/> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title}   onChange={(e) => set_Title(e.target.value)}  id="" className="form-control" /> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)}  id="" className='form-control'></textarea> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text"  value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" /> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status"  id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)}> <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" className="btn btn-warning"  data-bs-dismiss="modal">Update</button>
+            </div>
+          </form>
+        </div>
       </div>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+      {
+        /**
+        |--------------------------------------------------
+        | Modal for add data 
+        |--------------------------------------------------
+        */
+      }
+      <div className="modal fade" id="staticBackdrop_add" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <form className="modal-content"  ref={allField} action={async (formData:FormData) => {
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+                let s = await Func_add_data(formData) 
+                if( s == '200'){
+                  setTimeout(()=> {
+                    listData()
+                    allField.current?.reset()
+
+                    Swal.fire({
+                      position: "center",
+                      icon: "success",
+                      title: "Data was saved",
+                      showConfirmButton: true
+                      // timer: 1500
+                    });
+
+
+                  },100)
+                  
+                }
+                else{
+                  // when failed to add stuff
+                  // console.log('error')
+                }
+              
+            }} > 
+            <div className="modal-header bg-success text-white ">
+              <h5 className="modal-title" id="staticBackdropLabel">Add data</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              <div className='row' id="add_data" >
+                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'> <input type="text" name="ID" id="" placeholder='auto' className=" form-control " disabled/> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" id="" className="form-control" /> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" id="" className='form-control' ></textarea> </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" id="" className="form-control" /> </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" className="btn btn-success" data-bs-dismiss="modal">Add</button>
+            </div>
+          </form>
+        </div>
       </div>
-    </main>
-  );
+      
+      {
+        /**
+        |--------------------------------------------------
+        |   Modal for delete
+        |--------------------------------------------------
+        */
+       
+      }
+      <div className="modal fade" id="staticBackdrop_del" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content"> 
+            <div className="modal-header bg-danger text-white ">
+              <h5 className="modal-title" id="staticBackdropLabel">Delete !</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {status_fetch == false && ( 
+              <div className='row'>
+                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'>  {_id.id} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Date_publish  </div>   <div className='col-9 fw-normal'>  {att.Date_publish} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
+                <hr className='my-3'/>
+                <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {att.createdAt} </div>
+              </div>
+              )
+              }
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" className="btn btn-danger" onClick={() => { func_delete(secret_id)}} data-bs-dismiss="modal">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </>
+  )
 }
+
+export default page

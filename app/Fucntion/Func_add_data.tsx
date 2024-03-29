@@ -15,7 +15,7 @@ const Func_add_data = async (formData:FormData) => {
           "Title": formData.get('Title'),
           "Description": formData.get('Description'),
           "Excerpt": formData.get('Excerpt'),
-          "Status": formData.get('Status'),
+          "Status": false,
           "Date_publish": null
         }
       });

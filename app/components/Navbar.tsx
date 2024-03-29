@@ -1,12 +1,22 @@
-import { cookies } from 'next/headers'
-import React from 'react'
-import Func_logout from './Func_logout'
+import React, { useEffect, useState } from 'react'
+import Func_logout from '../Fucntion/Func_logout'
 import { redirect, useRouter } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
-
+import Link from 'next/link'
+import Cookies from 'js-cookie'
+import Router from "next/router";
 const navbar = () => {
-    const { push } = useRouter();
+    const router = useRouter();
+    const [isToken , set_isToken] = useState<boolean>(false)
 
+    useEffect(() => {
+        const res = Cookies.get("token")
+        if(res){
+            set_isToken(true)
+        }
+        else{
+            set_isToken(false)
+        }
+    })
   return (
     <div>
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -28,14 +38,18 @@ const navbar = () => {
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
-                
-                <div onClick={async() => { const res = await Func_logout('token')
-                    if(res == "out"){
+                {(isToken) && (
+                    <div onClick={async() => { const res = await Func_logout('token')
+                        if(res == "out"){
+                            router.replace("/")
+                        }
+                    }} className='btn btn-warning'>Log Out</div>
 
-                        push("/login")
-                    }
+                )}
 
-            }} className='btn btn-warning'>Log Out</div>
+                {(!isToken) && (
+                    <Link href="/login" className='btn btn-primary'>Login</Link>
+                )}
             </div>
 
         </nav>
