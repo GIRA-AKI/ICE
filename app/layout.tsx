@@ -4,6 +4,8 @@ import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.css'
 import { CookiesProvider } from 'next-client-cookies/server';
 import Head from 'next/head';
+import { Suspense } from "react";
+import Loading from "./loading";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,7 +23,6 @@ export const metadata: Metadata = {
     icon: '/favicon.ico', // /public path
   },
 
-  
 };
 
 export default function RootLayout({
@@ -35,7 +36,7 @@ export default function RootLayout({
 
     <html lang="en">
       <Head>
-        <link rel="shortcut icon" href="@/app/public/android-chrome-192x192.png" />
+        <link rel="icon" href="/faicon.ico" />
       </Head>
       <body className={inter.className}>
         

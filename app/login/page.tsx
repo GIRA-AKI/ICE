@@ -2,10 +2,11 @@
 import ServerAction from './ServerAction';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-// import VisibilityIcon from '@mui/icons-material/Visibility';
-// import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Alert, AlertTitle, FormControl, IconButton, Input, InputAdornment, InputLabel, TextField } from '@mui/material';
 import Swal from 'sweetalert2';
+
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 // const Get_token =  () => {
 //     const cookieStore = cookies()
@@ -31,65 +32,77 @@ const page = () => {
     // },[status])
 
   return (
-    <div className='w-[350px] mx-auto my-5'>
+    <>
+    
+        <div className='w-full absolute top-0'>
 
-        <form action={ async (formData:FormData) => {
-            // wait to get data from ServerAction
-            const data_this = await ServerAction(formData);
+            { (state.status == 500) && (
+            <Alert severity="warning" className='w-full'>
+                {state.message}
+            </Alert>) }
 
-            // set state of value
-            setState(data_this);
-            if(data_this.status == 200) {
-                setTimeout(()=> {route.push('/')},2000)
-            }
-            else{
-                
-            }
-        }} className='form-login'>
-            <h2 className='text-center'>LOGIN</h2>
-            <div>
-                <TextField
-                    className="input-field "
-                    name='username'
-                    label='Username'
+            { (state.status == 200) && (
+            <Alert severity="success" className='w-full'>
+                {state.message}
+            </Alert>) }
+
+        </div>
+        <div className='w-[350px] mx-auto my-5'>
+
+            <form action={ async (formData:FormData) => {
+                // wait to get data from ServerAction
+                const data_this = await ServerAction(formData);
+
+                // set state of value
+                setState(data_this);
+                if(data_this.status == 200) {
+                    setTimeout(()=> {route.push('/')},2000)
+                }
+                else{
+                    
+                }
+            }} className='form-login'>
+                <h2 className='text-center'>LOGIN</h2>
+                <div>
+                    <TextField
+                        className="input-field "
+                        name='username'
+                        label='Username'
+                        variant="outlined"
+                        type="text"
+                        />
+                </div>
+
+                <div >
+                    <TextField
+                    className="input-field"
+                    name='password'
+                    label='Password'
                     variant="outlined"
-                    type="text"
+                    type={showPassword ? "text" : "password"} // <-- This is where the magic happens
+                    InputProps={{ // <-- This is where the toggle button is added.
+                        endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={handleClickShowPassword}
+                            onMouseDown={handleMouseDownPassword}
+                            >
+                            {showPassword ? "0" :"0"}
+                            </IconButton>
+                        </InputAdornment>
+                        )
+                    }}
                     />
-            </div>
+                </div>
+                <div className="input-field">
+                    <button type="submit" className='btn btn-primary  float-end'>Login</button>
+                </div>
+            </form>
 
-            <div >
-                <TextField
-                className="input-field"
-                name='password'
-                label='Password'
-                variant="outlined"
-                type={showPassword ? "text" : "password"} // <-- This is where the magic happens
-                InputProps={{ // <-- This is where the toggle button is added.
-                    endAdornment: (
-                    <InputAdornment position="end">
-                        <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
-                        >
-                        {showPassword ? "o" :"0"}
-                        </IconButton>
-                    </InputAdornment>
-                    )
-                }}
-                />
-            </div>
-            <div className="input-field">
-                <button type="submit" className='btn btn-primary  float-end'>Login</button>
-            <div>{ (state.message) && (
-                <Alert severity="warning" className='w-full'>
-                    {state.message}
-                </Alert>
-            ) }</div>
-            </div>
-        </form>
+        </div>
+    </>
 
-    </div>
   )
 }
 

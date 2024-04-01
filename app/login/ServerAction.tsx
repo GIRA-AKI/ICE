@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation'
 const ServerAction = async (formData: FormData) => {
     
     let message:string ='';
-
     try {
         let data: any 
         const myHeaders = new Headers();

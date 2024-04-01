@@ -7,6 +7,7 @@ import Router from "next/router";
 const navbar = () => {
     const router = useRouter();
     const [isToken , set_isToken] = useState<boolean>(false)
+    const [btn , set_btn] = useState<boolean>(false)
 
     useEffect(() => {
         const res = Cookies.get("token")
@@ -16,6 +17,7 @@ const navbar = () => {
         else{
             set_isToken(false)
         }
+        set_btn(true)
     })
   return (
     <div>
@@ -38,7 +40,9 @@ const navbar = () => {
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>
-                {(isToken) && (
+
+
+                {  isToken && btn && (
                     <div onClick={async() => { const res = await Func_logout('token')
                         if(res == "out"){
                             router.replace("/")
@@ -47,7 +51,7 @@ const navbar = () => {
 
                 )}
 
-                {(!isToken) && (
+                {  !isToken && btn && (
                     <Link href="/login" className='btn btn-primary'>Login</Link>
                 )}
             </div>
