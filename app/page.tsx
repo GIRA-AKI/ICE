@@ -5,9 +5,9 @@ import Func_add_data from './Fucntion/Func_add_data'
 import { redirect, useRouter } from 'next/navigation'
 import Swal from 'sweetalert2'
 import Cookies from 'js-cookie'
-import Loading from './components/Loading'
-import navbar from './components/Navbar'
-import RefreshIcon from '@mui/icons-material/Refresh';
+import TablePagination from '@mui/material/TablePagination';
+import { Pagination, Stack } from '@mui/material'
+
 
 const page = () => {
   const router = useRouter();
@@ -27,8 +27,14 @@ const page = () => {
   const [isToken, set_isToken] = useState<Boolean>(false)
 
   const [dataLoad, SetdataLoad] = useState<Boolean>(false)
-  const listData = async () => {
-    console.log("list แล้ว")
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [stackNum , set_stackNum] = useState<any>(1)
+  const [currentPage , set_currentPage] = useState<number>(1)
+  let num = 10
+
+
+  const allIndex = async () =>{
     const token = Cookies.get('token')
     const myHeaders = new Headers();
     myHeaders.append("Authorization", "Bearer " + token);
@@ -38,15 +44,50 @@ const page = () => {
       redirect: "follow"
     };
 
-    await fetch('https://dashboard.myhuahin.co/api/blogs/', requestOptions).then(res => res.json()).then((d) => {
-      if (d.data == null) {
-        setData([])
-      } else {
-        setData(d.data)
+    await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=99999' , requestOptions).then(res => res.json()).then((d) => {
+      if (d.data != null) {
+        set_stackNum((d.data.length / rowsPerPage))
       }
-      SetdataLoad(true)
     })
 
+  }
+
+  const listData = async (page:number = 0) => {
+    allIndex()
+    const token = Cookies.get('token')
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Bearer " + token);
+    const requestOptions: any = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow"
+    };
+
+    if(page != 0 ){
+
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]='+rowsPerPage+'&populate=*' + '&pagination[page]='  +page  , requestOptions).then(res => res.json()).then((d) => {
+        if (d.data == null) {
+          setData([])
+        } else {
+          setData(d.data)
+          allIndex()
+        }
+        SetdataLoad(true)
+      })
+
+    }
+    else{
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]='+rowsPerPage+'&populate=*', requestOptions).then(res => res.json()).then((d) => {
+        if (d.data == null) {
+          setData([])
+        } else {
+          setData(d.data)
+          allIndex()
+        }
+        SetdataLoad(true)
+      })
+
+    }
   }
 
   /**
@@ -225,7 +266,7 @@ const page = () => {
       .catch((error) => console.error(error));
 
     setTimeout(() => {
-      listData()
+      listData(currentPage)
       Swal.fire({
         position: "center",
         icon: "success",
@@ -266,6 +307,42 @@ const page = () => {
   useEffect(() => {
     typeof document !== undefined ? require('bootstrap/dist/js/bootstrap') : null
   }, [])
+
+
+  const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    listData(value);
+    set_currentPage(value)
+
+  };
+
+
+
+  const handleChangePage = async (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => {
+    await setPage(newPage);
+  };
+
+
+  const handleChangeRowsPerPage = async (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    // setRowsPerPage(parseInt(event.target.value, 10));
+    setRowsPerPage(parseInt(event.target.value, 10));
+    set_currentPage(1)
+    console.log("currentPage page : " , currentPage)
+    // setPage(0)
+  };
+
+  useEffect(()=>{
+    allIndex()
+    listData(1)
+    console.log(currentPage)
+    num = rowsPerPage
+  },[rowsPerPage])
+
+
   return (
     <>
       <Navbar />
@@ -278,7 +355,7 @@ const page = () => {
             )}
           {
             (isToken) && (
-              <button className='rounded bg-warning btn float-end my-2 mx-2' onClick={() => listData()}>Re</button> 
+              <button className='rounded bg-warning btn float-end my-2 mx-2' onClick={() => listData(currentPage)}>Re</button> 
             )}
         </div>
 
@@ -288,6 +365,7 @@ const page = () => {
           <thead className='table-dark'>
             <tr>
               <th scope="col">#</th>
+              <th scope="col">Image</th>
               <th scope="col">Title</th>
               <th scope="col">Description</th>
               <th scope="col">Excerpt</th>
@@ -312,7 +390,7 @@ const page = () => {
                 const att = e?.attributes
                 return (
                   <tr key={index} >
-                    <th scope="row">{index + 1}</th>
+                    <th scope="row">{(index+1) + (currentPage * rowsPerPage) - rowsPerPage}</th>
                     <td>{att?.Title}</td>
                     <td>{att?.Description}</td>
                     <td>{att?.Excerpt}</td>
@@ -340,8 +418,9 @@ const page = () => {
 
                 )
 
-
+                
               })
+              
             )}
 
             {dataLoad == false && (
@@ -360,8 +439,25 @@ const page = () => {
         </table>
 
 
-      </div>
+        { dataLoad  &&(
+        <div className='flex w-fit mx-auto items-center'>
+          <label htmlFor="" className='w-fit pb-1'>จำนวนข้อมูล</label>
+          <TablePagination
+            component="div"
+            count={dataLoad ? data.length : 100}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage} className='w-fit  pt-0 top-0'
+          />
+          <Stack spacing={2} className='pb-1' >
+            <Pagination count={Math.ceil(stackNum)} shape="rounded" page={currentPage}   onChange={handleChange}/>
+          </Stack>
+        </div>)}
 
+      
+
+      </div>
 
       {
         /**
@@ -455,7 +551,7 @@ const page = () => {
             let s = await Func_add_data(formData)
             if (s == '200') {
               setTimeout(() => {
-                listData()
+                listData(currentPage)
                 allField.current?.reset()
 
                 Swal.fire({
@@ -538,6 +634,7 @@ const page = () => {
 
     </>
   )
+ 
 }
 
 export default page

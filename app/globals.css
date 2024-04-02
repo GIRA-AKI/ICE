@@ -16,4 +16,8 @@
     @apply bg-slate-50 rounded-lg
 }
 
+.MuiTablePagination-displayedRows,.MuiTablePagination-actions,.MuiTablePagination-selectLabel{
+    display: none;
+}
+
 

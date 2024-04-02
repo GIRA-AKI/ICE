@@ -25,6 +25,7 @@ const page = () => {
     // const [status ,setStatus] = useState<any>('')
     const [state ,setState] = useState<any>({})
     const route = useRouter()
+    const [ca , set_clickAble]  = useState<string>('')
     // console.log(cookies.get('token'))
 
     // useEffect(()=>{
@@ -88,7 +89,7 @@ const page = () => {
                             onClick={handleClickShowPassword}
                             onMouseDown={handleMouseDownPassword}
                             >
-                            {showPassword ? "0" :"0"}
+                            {showPassword ? "o" :"0"}
                             </IconButton>
                         </InputAdornment>
                         )
@@ -96,7 +97,7 @@ const page = () => {
                     />
                 </div>
                 <div className="input-field">
-                    <button type="submit" className='btn btn-primary  float-end'>Login</button>
+                    <button type="submit" className='btn btn-primary  float-end' > Login</button>
                 </div>
             </form>
 
