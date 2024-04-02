@@ -7,6 +7,7 @@ import Swal from 'sweetalert2'
 import Cookies from 'js-cookie'
 import Loading from './components/Loading'
 import navbar from './components/Navbar'
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const page = () => {
   const router = useRouter();
@@ -27,7 +28,7 @@ const page = () => {
 
   const [dataLoad, SetdataLoad] = useState<Boolean>(false)
   const listData = async () => {
-
+    console.log("list แล้ว")
     const token = Cookies.get('token')
     const myHeaders = new Headers();
     myHeaders.append("Authorization", "Bearer " + token);
@@ -242,7 +243,7 @@ const page = () => {
     |--------------------------------------------------
     */
   }
-  function formatDate(dateString: string) {
+  function formatDateEN(dateString: string) {
     const date = new Date(dateString);
     const formattedDate = `${date.getFullYear()} - ${(date.getMonth() + 1).toString().padStart(2, '0')} - ${date.getDate().toString().padStart(2, '0')}`;
 
@@ -250,6 +251,16 @@ const page = () => {
 
     if (dateString == null) return "- -"
     return `${formattedDate} ${formattedTime}`;
+  }
+
+  function formatDateTH(dateString: string) {
+    const date = new Date(dateString);
+    const formattedDate = `${date.getFullYear()} - ${(date.getMonth() + 1).toString().padStart(2, '0')} - ${date.getDate().toString().padStart(2, '0')}`;
+    const formatted_Date = `${date.getDate().toString().padStart(2,"0")} - ${(date.getMonth()+1).toString().padStart(2,"0")} - ${(date.getFullYear()+543).toString()}`
+    const formattedTime = `${(date.getHours() - 7).toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+    if (dateString == null) return "- -"
+    return `${formatted_Date}   ${formattedTime}`;
   }
 
   useEffect(() => {
@@ -263,7 +274,11 @@ const page = () => {
         <div className="  ">
           {
             (isToken) && (
-              <button className='btn-success btn float-end my-2' data-bs-toggle="modal" data-bs-target="#staticBackdrop_add"  >Add</button>
+              <button className='btn-success btn float-end my-2' data-bs-toggle="modal" data-bs-target="#staticBackdrop_add"  >Add</button> 
+            )}
+          {
+            (isToken) && (
+              <button className='rounded bg-warning btn float-end my-2 mx-2' onClick={() => listData()}>Re</button> 
             )}
         </div>
 
@@ -277,7 +292,7 @@ const page = () => {
               <th scope="col">Description</th>
               <th scope="col">Excerpt</th>
               <th scope="col">Status</th>
-              <th scope="col">Date_publish</th>
+              <th scope="col">Date publish</th>
               <th scope="col">Options</th>
             </tr>
           </thead>
@@ -305,7 +320,7 @@ const page = () => {
                       {(att?.Status.toString() == "true") && (<div className="opacity-90 bg-green-500 mx-auto rounded-full w-4 h-4"></div>)}
                       {(att?.Status.toString() == "false") && (<div className="opacity-50  bg-slate-500 mx-auto rounded-full  w-4 h-4"></div>)}
                     </td>
-                    <td>{formatDate(att?.Date_publish)}</td>
+                    <td>{formatDateTH(att?.Date_publish)}</td>
                     <td className='w-[300px]' >
                       <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop" className='btn btn-info m-2'>Info</button>
 
@@ -365,8 +380,6 @@ const page = () => {
             <div className="modal-body">
               {status_fetch == false && (
                 <div className='row'>
-                  <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'>  {_id.id} </div>
-                  <hr className='my-3' />
                   <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
@@ -377,9 +390,9 @@ const page = () => {
                     {(status.toString() == "true") ? "Published" : "Unpublished"}
                   </div>
                   <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Date_publish  </div>   <div className='col-9 fw-normal'>  {att.Date_publish} </div>
+                  <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
                   <hr className='my-3' />
-                  <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {att.createdAt} </div>
+                  <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
                 </div>
               )
               }
@@ -409,8 +422,6 @@ const page = () => {
             </div>
             <div className="modal-body">
               <div className='row' id="add_data" >
-                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'> <input type="text" name="ID" placeholder={_id.id} id="" className=" form-control " disabled /> </div>
-                <hr className='my-3' />
                 <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" /> </div>
                 <hr className='my-3' />
                 <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control'></textarea> </div>
@@ -471,8 +482,6 @@ const page = () => {
             </div>
             <div className="modal-body">
               <div className='row' id="add_data" >
-                <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'> <input type="text" name="ID" id="" placeholder='auto' className=" form-control " disabled /> </div>
-                <hr className='my-3' />
                 <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" id="" className="form-control" /> </div>
                 <hr className='my-3' />
                 <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" id="" className='form-control' ></textarea> </div>
@@ -506,17 +515,15 @@ const page = () => {
             <div className="modal-body">
               {status_fetch == false && (
                 <div className='row'>
-                  <div className='col-3 fw-bold'> ID  </div>            <div className='col-9 fw-normal'>  {_id.id} </div>
-                  <hr className='my-3' />
                   <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
                   <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Date_publish  </div>   <div className='col-9 fw-normal'>  {att.Date_publish} </div>
-                  <hr className='my-3' />
                   <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
                   <hr className='my-3' />
-                  <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {att.createdAt} </div>
+                  <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
+                  <hr className='my-3' />
+                  <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
                 </div>
               )
               }
