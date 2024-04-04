@@ -8,6 +8,7 @@ const navbar = () => {
     const router = useRouter();
     const [isToken , set_isToken] = useState<boolean>(false)
     const [btn , set_btn] = useState<boolean>(false)
+    const [active, set_active] =useState<boolean>(false)
 
     useEffect(() => {
         const res = Cookies.get("token")
@@ -43,16 +44,17 @@ const navbar = () => {
 
 
                 {  isToken && btn && (
-                    <div onClick={async() => { const res = await Func_logout('token')
+                    <button onClick={async() => { const res = await Func_logout('token')
+                        set_active(true)
                         if(res == "out"){
                             router.replace("/")
                         }
-                    }} className='btn btn-warning'>Log Out</div>
+                    }} className='btn btn-warning' disabled={active}>Log Out</button>
 
                 )}
 
                 {  !isToken && btn && (
-                    <Link href="/login" className='btn btn-primary'>Login</Link>
+                    <Link href="/login" className='btn btn-primary' >Login</Link>
                 )}
             </div>
 

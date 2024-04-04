@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
-        KEYTOEKN: process.env.KEYTOEKN,
+        KEYTOKEN: process.env.KEYTOKEN,
       },
     images: {
         domains : ['localhost'],

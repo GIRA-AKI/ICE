@@ -9,11 +9,12 @@ import TablePagination from '@mui/material/TablePagination';
 import { Pagination, Stack } from '@mui/material'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
-import 'dotenv/config'
 
-const kEYTOEKN = process.env.KEYTOEKN;
+import 'dotenv/config'
+const KEYTOKEN = process.env.KEYTOKEN;
 
 const page = () => {
+
   const router = useRouter();
   const [data, setData] = useState<any>([])
   const [_id, set_id] = useState<any>({})
@@ -32,12 +33,11 @@ const page = () => {
 
   const [dataLoad, SetdataLoad] = useState<Boolean>(false)
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10)
   const [stackNum, set_stackNum] = useState<any>(1)
   const [currentPage, set_currentPage] = useState<number>(1)
   const [selectedImage, setSelectedImage] = useState<any>()
   const [switch_image, set_switch_image] = useState<any>(false)
-  let num = 10
 
 
   const allIndex = async () => {
@@ -119,7 +119,6 @@ const page = () => {
   }, [router, Cookies.get('token')])
 
 
-
   /**
   |--------------------------------------------------
   |   detail function
@@ -153,9 +152,9 @@ const page = () => {
     set_status(ram?.data?.attributes.Status)
     set_Date_publish(ram?.data?.attributes.Date_publish)
 
-    console.log(ram?.data?.attributes.Image_cover)
+    // // console.log(ram?.data?.attributes.Image_cover)
     await setSelectedImage("https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
-    console.log("here it is : https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
+    // // console.log("here it is : https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
 
     set_new_b(ram?.data?.attributes.Status)
     setstatus_fetch(false);
@@ -187,7 +186,7 @@ const page = () => {
 
     fetch("https://dashboard.myhuahin.co/api/blogs/" + ID, requestOptions)
       .then((response) => response.text())
-      // .then((result) => console.log(result))
+      // // // .then((result) => console.log(result))
       .catch((error) => console.error(error));
 
     setstatus_fetch(false);
@@ -204,45 +203,54 @@ const page = () => {
     }, 100)
   }
 
-  // image uploader 
-  const func_upload_image = (imageRef: any, idRef: number | string) => {
+  /**
+  |--------------------------------------------------
+  | image uploader 
+  |--------------------------------------------------
+  */
+  const func_upload_image = async (imageRef: any, idRef: number | string) => {
 
     const token = Cookies.get('token')
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${kEYTOEKN}`);
 
-    console.log(imageRef)
+
+    // const myHeaders = new Headers();
+    // console.log("Here is "+KEYTOKEN)
+    // myHeaders.append("Authorization", "Bearer "+{KEYTOKEN});
+    const headers = {
+      "Authorization": `Bearer ${KEYTOKEN}`
+    }
+
+    // // console.log(imageRef)
 
     const fileBlob = new Blob([imageRef], { type: imageRef.type });
-    
-    console.log( `---------------------------+---------------------------------------------------------------------`)
-    console.log( `here your id : ${idRef}`)
     const formdata = new FormData();
     formdata.append("files", fileBlob, imageRef.name);
-    formdata.append("refId", `${idRef}`);
+    formdata.append("refId", idRef.toString() );
     formdata.append("ref", "api::blogs1.blogs1");
     formdata.append("field", "Image_cover");
-    
+
+   
+
     const requestOptions:any = {
       method: "POST",
-      headers: myHeaders,
+      headers,
       body: formdata,
       redirect: "follow"
     };
-
-    fetch("https://dashboard.myhuahin.co/api/upload/", requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.error(error));
+    
+    // console.log(imageRef.name)
+   await fetch("https://dashboard.myhuahin.co/api/upload", requestOptions)
+    .then((response) => response.text())
+    // .then((result) => console.log(result))
+    .catch((error) => console.error(error));
   }
 
-  {
-    /**
+
+  { /**
     |--------------------------------------------------
     | Edit function
     |--------------------------------------------------
-    */
-  }
+    */}
   const func_edit = (formData: FormData) => {
 
     if (formData.get('Status')?.toString() != "true" && formData.get('Status')?.toString() != "false") {
@@ -266,7 +274,7 @@ const page = () => {
     const date = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, '0')}`
     const hours = `${today.getHours().toString().padStart(2, "0")}:${today.getMinutes().toString().padStart(2, "0")}:00.000Z`
 
-    // console.log(hours)
+    // // // console.log(hours)
     let raw = JSON.stringify({})
     if (formData.get('Status')?.toString() != new_b?.toString()) {
       raw = JSON.stringify({
@@ -305,7 +313,7 @@ const page = () => {
 
     fetch("https://dashboard.myhuahin.co/api/blogs/" + secret_id, requestOptions)
       .then((response) => response.text())
-      // .then((result) => console.log(result))
+      // // // .then((result) => console.log(result))
       .catch((error) => console.error(error));
 
     setTimeout(() => {
@@ -370,15 +378,14 @@ const page = () => {
     // setRowsPerPage(parseInt(event.target.value, 10));
     setRowsPerPage(parseInt(event.target.value, 10));
     set_currentPage(1)
-    console.log("currentPage page : ", currentPage)
+    // // console.log("currentPage page : ", currentPage)
     // setPage(0)
   };
 
   useEffect(() => {
     allIndex()
     listData(1)
-    console.log(currentPage)
-    num = rowsPerPage
+    // // console.log(currentPage)
   }, [rowsPerPage])
 
 
@@ -397,7 +404,6 @@ const page = () => {
   const removeImage = () => {
     set_switch_image(false)
     moreMore(secret_id)
-    // set_switch_image()
   }
 
 
@@ -436,7 +442,7 @@ const page = () => {
 
             {data == null && (
               <tr>
-                <th colSpan={7} className='p-5 text-2xl'>
+                <th colSpan={8} className='p-5 text-2xl'>
                   Data not founded !
                 </th>
               </tr>
@@ -445,7 +451,7 @@ const page = () => {
             {data.length > 0 && dataLoad == true && (
               data.map((e: any, index: number) => {
                 const att = e?.attributes
-                console.log("INDEX : " + att.Image_cover.data)
+                // // console.log("INDEX : " + att.Image_cover.data)
                 return (
                   <tr key={index} >
                     <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th>
@@ -490,13 +496,13 @@ const page = () => {
 
             {dataLoad == false && (
               <tr>
-                <td colSpan={7}>Loading...</td>
+                <td colSpan={8}>Loading...</td>
               </tr>
             )}
 
             {data.length == 0 && dataLoad == true && (
               <tr>
-                <td colSpan={7}>Not founded data</td>
+                <td colSpan={8}>Not founded data</td>
               </tr>
             )}
 
@@ -577,7 +583,7 @@ const page = () => {
       }
       <div className="modal fade" id="staticBackdrop_edit" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
-          <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} encType='multipart/form-data'>
+          <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} >
             <div className="modal-header bg-warning  ">
               <h5 className="modal-title" id="staticBackdropLabel">Edit </h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -592,12 +598,13 @@ const page = () => {
                 <hr className='my-3' />
                 <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)}> <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control" /> </div>
+                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg"/> </div>
                 <hr className='my-3' />
 
-                {dataLoad && (
+                {dataLoad && switch_image &&(
                   <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} />
                 )}
+
 
 
 
@@ -610,8 +617,6 @@ const page = () => {
           </form>
         </div>
       </div>
-
-
 
       {
         /**
@@ -644,7 +649,7 @@ const page = () => {
             }
             else {
               // when failed to add stuff
-              // console.log('error')
+              // // // console.log('error')
             }
 
           }} >
@@ -659,6 +664,8 @@ const page = () => {
                 <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" id="" className='form-control' ></textarea> </div>
                 <hr className='my-3' />
                 <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" id="" className="form-control" /> </div>
+                <hr className='my-3' />
+                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" id="" className="form-control" /> </div>
               </div>
             </div>
             <div className="modal-footer">
