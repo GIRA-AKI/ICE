@@ -61,7 +61,8 @@ const page = () => {
                     setTimeout(()=> {route.push('/')},2000)
                 }
                 else{
-                    set_active(false)
+                    setTimeout(()=> {set_active(false)},1000)
+                    
                 }
             }} className='form-login'>
                 <h2 className='text-center'>LOGIN</h2>
