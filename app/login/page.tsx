@@ -25,7 +25,7 @@ const page = () => {
     // const [status ,setStatus] = useState<any>('')
     const [state ,setState] = useState<any>({})
     const route = useRouter()
-    const [ca , set_clickAble]  = useState<string>('')
+    const [active , set_active] = useState<boolean>(false)
     // console.log(cookies.get('token'))
 
     // useEffect(()=>{
@@ -51,6 +51,7 @@ const page = () => {
         <div className='w-[350px] mx-auto my-5'>
 
             <form action={ async (formData:FormData) => {
+                set_active(true)
                 // wait to get data from ServerAction
                 const data_this = await ServerAction(formData);
 
@@ -60,7 +61,7 @@ const page = () => {
                     setTimeout(()=> {route.push('/')},2000)
                 }
                 else{
-                    
+                    set_active(false)
                 }
             }} className='form-login'>
                 <h2 className='text-center'>LOGIN</h2>
@@ -97,7 +98,7 @@ const page = () => {
                     />
                 </div>
                 <div className="input-field">
-                    <button type="submit" className='btn btn-primary  float-end' > Login</button>
+                    <button type="submit" className='btn btn-primary  float-end' disabled={active}> Login</button>
                 </div>
             </form>
 
