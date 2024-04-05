@@ -13,7 +13,19 @@ import { cookies } from 'next/headers'
 import 'dotenv/config'
 const KEYTOKEN = process.env.KEYTOKEN;
 
+
+
+
 const page = () => {
+  function getExtension(filename:any) {
+    return filename.split('.').pop()
+  }
+
+  // for add modal 
+  const [atitle , set_atitle] = useState<string>('')
+  const [ades , set_ades] = useState<string>('')
+  const [aexe , set_aexe] = useState<string>('')
+
 
   const router = useRouter();
   const [data, setData] = useState<any>([])
@@ -36,9 +48,9 @@ const page = () => {
   const [rowsPerPage, setRowsPerPage] = React.useState(10)
   const [stackNum, set_stackNum] = useState<any>(1)
   const [currentPage, set_currentPage] = useState<number>(1)
-  const [selectedImage, setSelectedImage] = useState<any>()
+  const [selectedImage, setSelectedImage] = useState<any>('/blank.png')
   const [switch_image, set_switch_image] = useState<any>(false)
-
+  const [handle_image , set_handle_image] = useState<string>('') 
 
   const allIndex = async () => {
     const token = Cookies.get('token')
@@ -153,7 +165,12 @@ const page = () => {
     set_Date_publish(ram?.data?.attributes.Date_publish)
 
     // // console.log(ram?.data?.attributes.Image_cover)
-    await setSelectedImage("https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
+    if(ram?.data?.attributes?.Image_cover?.data?.attributes?.url == null){
+      await setSelectedImage("/blank.png")
+    }
+    else{
+      await setSelectedImage("https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.url)
+    }
     // // console.log("here it is : https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
 
     set_new_b(ram?.data?.attributes.Status)
@@ -192,7 +209,7 @@ const page = () => {
     setstatus_fetch(false);
 
     setTimeout(() => {
-      listData()
+      listData(currentPage)
       Swal.fire({
         position: "center",
         icon: "success",
@@ -253,6 +270,22 @@ const page = () => {
     */}
   const func_edit = (formData: FormData) => {
 
+    // const arr = ['png,jpeg,jpg']
+    const img:any = formData.get('image')
+    if(img.name != ''){
+      const imgEx = getExtension(img.name)
+      if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "Type image incorrect",
+          showConfirmButton: true
+          // timer: 1500
+        });
+        return
+      }
+    }
+
     if (formData.get('Status')?.toString() != "true" && formData.get('Status')?.toString() != "false") {
       Swal.fire({
         position: "center",
@@ -262,6 +295,7 @@ const page = () => {
         // timer: 1500
       });
       return
+      
     }
 
     const token = Cookies.get('token')
@@ -341,7 +375,7 @@ const page = () => {
 
     const formattedTime = `${(date.getHours() - 7).toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 
-    if (dateString == null) return "- -"
+    if (dateString == null) return "N/A"
     return `${formattedDate} ${formattedTime}`;
   }
 
@@ -351,7 +385,7 @@ const page = () => {
     const formatted_Date = `${date.getDate().toString().padStart(2, "0")} - ${(date.getMonth() + 1).toString().padStart(2, "0")} - ${(date.getFullYear() + 543).toString()}`
     const formattedTime = `${(date.getHours() - 7).toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 
-    if (dateString == null) return "- -"
+    if (dateString == null) return "N/A"
     return `${formatted_Date}   ${formattedTime}`;
   }
 
@@ -398,6 +432,7 @@ const page = () => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
       set_switch_image(true)
+      console.log("work here")
     }
   }
 
@@ -457,10 +492,10 @@ const page = () => {
                     <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th>
                     <td>
                       {att.Image_cover.data == null &&
-                        (<Image width={200} height={200} alt={"image ice"} src="/blank.png" className='border-none w-[100px]' />)}
+                        (<Image width={50} height={50} alt={"image ice"} src="/blank.png" className='border-none w-[100px] oneonone' />)}
 
                       {att.Image_cover.data != null &&
-                        (<Image width={200} height={200} alt={"image ice"} src={"https://dashboard.myhuahin.co" + att?.Image_cover?.data?.attributes?.url} />)
+                        (<Image width={50} height={50} alt={"image ice"} className='border-none w-[100px] oneonone' src={"https://dashboard.myhuahin.co" + att?.Image_cover?.data?.attributes?.url} />)
                       }
                     </td>
                     <td>{att?.Title}</td>
@@ -561,6 +596,11 @@ const page = () => {
                   <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
+                  <div className='col-12'>
+                    {dataLoad && (
+                      <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                    )}
+                  </div>
                 </div>
               )
               }
@@ -592,18 +632,23 @@ const page = () => {
               <div className='row' id="add_data" >
                 <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" /> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control'></textarea> </div>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control' ></textarea> </div>
                 <hr className='my-3' />
                 <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" /> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)}> <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
+                <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg"/> </div>
+                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg" /> </div>
                 <hr className='my-3' />
 
-                {dataLoad && switch_image &&(
-                  <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} />
-                )}
+                <div className="col-12">
+                  {dataLoad && switch_image && (
+                    <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
+                  )}
+                  {dataLoad && !switch_image && (
+                    <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                  )}
+                </div>
 
 
 
@@ -612,7 +657,7 @@ const page = () => {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={removeImage}>Close</button>
-              <button type="submit" className="btn btn-warning" data-bs-dismiss="modal">Update</button>
+              <button type="submit" className="btn btn-warning" data-bs-dismiss="modal" disabled={! Title || !Description || !Excerpt  } >Update</button>
             </div>
           </form>
         </div>
@@ -629,11 +674,30 @@ const page = () => {
         <div className="modal-dialog">
           <form className="modal-content" ref={allField} action={async (formData: FormData) => {
 
+              const img:any = formData.get('image')
+              if(img.name != ''){
+                const imgEx = getExtension(img.name)
+                if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
+                  Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Type image incorrect",
+                    showConfirmButton: true
+                    // timer: 1500
+                  });
+                  return
+                }
+              }
+
+
             let s = await Func_add_data(formData)
-            if (s == '200') {
+            if (s == 200) {
               setTimeout(() => {
                 listData(currentPage)
-                allField.current?.reset()
+                set_handle_image('')
+                set_atitle('')
+                set_aexe('')
+                set_ades('')
 
                 Swal.fire({
                   position: "center",
@@ -659,18 +723,25 @@ const page = () => {
             </div>
             <div className="modal-body">
               <div className='row' id="add_data" >
-                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" id="" className="form-control" /> </div>
+                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={atitle} onChange={(e) => set_atitle(e.target.value)} className="form-control" /> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" id="" className='form-control' ></textarea> </div>
+                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={ades} onChange={(e) => set_ades(e.target.value)} className='form-control' ></textarea> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" id="" className="form-control" /> </div>
+                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" value={aexe} onChange={(e) => set_aexe(e.target.value)} className="form-control" /> </div>
                 <hr className='my-3' />
-                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" id="" className="form-control" /> </div>
+                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" value={handle_image} onChange={(e) => (set_handle_image(e.target.value) ,(e:any)=>{imageChange})} className="form-control" /> </div> 
+                <div className='col-12'>
+                  {dataLoad && (
+
+                    <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} />
+
+                  )}
+                </div>
               </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" className="btn btn-success" data-bs-dismiss="modal">Add</button>
+              <button type="submit" className="btn btn-success" data-bs-dismiss="modal" disabled={!atitle || !ades || !aexe || !handle_image}>Add</button>
             </div>
           </form>
         </div>
@@ -682,7 +753,6 @@ const page = () => {
         |   Modal for delete
         |--------------------------------------------------
         */
-
       }
       <div className="modal fade" id="staticBackdrop_del" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
@@ -703,6 +773,12 @@ const page = () => {
                   <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
+                  <div className="col-12">
+                    {dataLoad && (
+                      <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                    )}
+                  </div>
+
                 </div>
               )
               }

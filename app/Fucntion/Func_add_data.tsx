@@ -5,11 +5,10 @@ import React from 'react'
 
 const kEYTOKEN = process.env.KEYTOKEN
 
-const upload_image = (imageRef:any , scred_id:number  ) => {
+const upload_image = async (imageRef:any , scred_id:number  ) => {
 
   const myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer "+kEYTOKEN);
-
 
   const fileBlob = new Blob([imageRef], { type: imageRef.type });
   const formdata = new FormData();
@@ -25,10 +24,10 @@ const upload_image = (imageRef:any , scred_id:number  ) => {
     redirect: "follow"
   };
 
-  fetch("https://dashboard.myhuahin.co/api/upload", requestOptions)
-    .then((response) => response.text())
-    .then((result) => console.log(result))
-    .catch((error) => console.error(error));
+  const result = await fetch("https://dashboard.myhuahin.co/api/upload", requestOptions)
+
+  return result.status
+
 }
 
 
@@ -59,25 +58,19 @@ const Func_add_data = async (formData:FormData) => {
     redirect: "follow"
   };
 
-  let res:any;
-  await fetch("https://dashboard.myhuahin.co/api/blogs", requestOptions)
-  .then((response) => { res_status = response.status 
-  res = response})
-  .then((result) => console.log(result))
-  .catch((error) => console.error(error));
+  const result  = await fetch("https://dashboard.myhuahin.co/api/blogs", requestOptions)
+  const img = formData.get("image")
 
-
-
-
-  console.log("Here is the result of trying : " , res)
-  if(res_status == 200){
-
-
-    if(formData.get('image') != null){
-      console.log('tess')
-    } 
+  if(result.status == 200){
+    const res = await result.json()
+    if(formData.get("image") != null)
+    {
+      return upload_image(img,res.data.id)
+    }
+    
+  
   }
-  return res_status
+  return result.status 
 }
 
 export default Func_add_data

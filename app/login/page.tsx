@@ -53,7 +53,6 @@ const page = () => {
         <div className='w-[350px] mx-auto my-5'>
 
             <form action={ async (formData:FormData) => {
-                set_active(true)
                 // wait to get data from ServerAction
                 const data_this = await ServerAction(formData);
 
@@ -101,7 +100,7 @@ const page = () => {
                     />
                 </div>
                 <div className="input-field">
-                    <button type="submit" className='btn btn-primary  float-end' disabled={active}> Login</button>
+                    <button type="submit" className='btn btn-primary  float-end' disabled={active} onClick={()=>setTimeout(()=>set_active(true),1)}> Login</button>
                 </div>
             </form>
 

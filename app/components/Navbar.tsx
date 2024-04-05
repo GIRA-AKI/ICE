@@ -45,17 +45,17 @@ const navbar = () => {
 
                 {  isToken && btn && (
                     <button onClick={async() => { const res = await Func_logout('token')
-                        set_active(true)
+                        setTimeout(()=>set_active(true),1)
                         if(res == "out"){
                             router.replace("/")
                         }
                     }} className='btn btn-warning' disabled={active}>Log Out</button>
-
+                                                                    //  onClick={()=>setTimeout(()=>set_active(true),1)}
                 )}
 
-                {  !isToken && btn && (
+                {/* {  !isToken && btn && (
                     <Link href="/login" className='btn btn-primary' >Login</Link>
-                )}
+                )} */}
             </div>
 
         </nav>
