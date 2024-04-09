@@ -11,6 +11,9 @@ import Image from 'next/image'
 import { cookies } from 'next/headers'
 
 import 'dotenv/config'
+import Modal from 'react-bootstrap/esm/Modal'
+import Button from 'react-bootstrap/esm/Button'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 const KEYTOKEN = process.env.KEYTOKEN;
 
 
@@ -25,8 +28,11 @@ const page = () => {
   const [atitle , set_atitle] = useState<string>('')
   const [ades , set_ades] = useState<string>('')
   const [aexe , set_aexe] = useState<string>('')
+  const [modal_add, set_modal_add] = useState(false);
+  const [modal_edit, set_modal_edit] = useState(false);
+  const [btn , set_btn] =useState(false)
 
-
+  const [sort, set_sort] = useState<boolean>(false)
   const router = useRouter();
   const [data, setData] = useState<any>([])
   const [_id, set_id] = useState<any>({})
@@ -71,6 +77,7 @@ const page = () => {
   }
 
   const listData = async (page: number = 0) => {
+    console.log("--> " + sort)
     allIndex()
 
     const token = Cookies.get('token')
@@ -84,27 +91,56 @@ const page = () => {
 
     if (page != 0) {
 
-      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page, requestOptions).then(res => res.json()).then((d) => {
-        if (d.data == null) {
-          setData([])
-        } else {
-          setData(d.data)
-          allIndex()
-        }
-        SetdataLoad(true)
-      })
+      if(sort){
+        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + "&sort=id:desc" , requestOptions)
+        .then(res => res.json())
+        .then((d) => {
+          if (d.data == null) {
+            setData([])
+          } else {
+            setData(d.data)
+            allIndex()
+          }
+          SetdataLoad(true)
+        })
+      }
+      else{
+        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + "&sort=id:asc" , requestOptions)
+        .then(res => res.json())
+        .then((d) => {
+          if (d.data == null) {
+            setData([])
+          } else {
+            setData(d.data)
+            allIndex()
+          }
+          SetdataLoad(true)
+        })
+      }
 
     }
     else {
-      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*', requestOptions).then(res => res.json()).then((d) => {
-        if (d.data == null) {
-          setData([])
-        } else {
-          setData(d.data)
-          allIndex()
-        }
-        SetdataLoad(true)
-      })
+      if(sort){
+        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + "&sort=id:desc"  , requestOptions).then(res => res.json()).then((d) => {
+          if (d.data == null) {
+            setData([])
+          } else {
+            setData(d.data)
+            allIndex()
+          }
+          SetdataLoad(true)
+        })
+      }else{
+        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + "&sort=id:asc" , requestOptions).then(res => res.json()).then((d) => {
+          if (d.data == null) {
+            setData([])
+          } else {
+            setData(d.data)
+            allIndex()
+          }
+          SetdataLoad(true)
+        })
+      }
 
     }
   }
@@ -137,11 +173,11 @@ const page = () => {
   |--------------------------------------------------
   */
   const moreMore = async (ID: any) => {
+    set_handle_image('')
+    set_switch_image(false)
     set_setcret_id(ID)
     setstatus_fetch(true);
     const token = Cookies.get('token')
-
-    set_switch_image(false)
 
     const myHeaders = new Headers();
     myHeaders.append("Authorization", "Bearer " + token);
@@ -269,7 +305,7 @@ const page = () => {
     |--------------------------------------------------
     */}
   const func_edit = (formData: FormData) => {
-
+    setTimeout(()=>set_btn(true),1)
     // const arr = ['png,jpeg,jpg']
     const img:any = formData.get('image')
     if(img.name != ''){
@@ -351,7 +387,9 @@ const page = () => {
       .catch((error) => console.error(error));
 
     setTimeout(() => {
+      set_modal_edit(false)
       listData(currentPage)
+      set_btn(false)
       Swal.fire({
         position: "center",
         icon: "success",
@@ -422,6 +460,10 @@ const page = () => {
     // // console.log(currentPage)
   }, [rowsPerPage])
 
+  const handle_btn_edit = (id:number) => {
+    moreMore(id)
+    set_modal_edit(true)
+  }
 
   /**
   |--------------------------------------------------
@@ -432,11 +474,19 @@ const page = () => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
       set_switch_image(true)
-      console.log("work here")
+      if(e.target.value != null || e.target.value != '' || e.target.value != 0){
+        try{
+          set_handle_image(e.target.value)
+        }catch{
+          alert('error')
+        }
+      }
     }
   }
 
+
   const removeImage = () => {
+    set_modal_edit(false)
     set_switch_image(false)
     moreMore(secret_id)
   }
@@ -448,14 +498,27 @@ const page = () => {
       <div className="container p-5">
 
         <div className="  ">
+          <div className="btn btn-info" onClick={()=>{
+            if(sort == true){
+              set_sort(false)
+              allIndex()
+              listData()
+            }
+            else if(sort == false){
+              set_sort(true)
+              allIndex()
+              listData()
+            }
+          }}>Filter</div>
           {
             (isToken) && (
-              <button className='btn-success btn float-end my-2' data-bs-toggle="modal" data-bs-target="#staticBackdrop_add"  >Add</button>
+              <Button variant="modal-add" onClick={()=>set_modal_add(true)} className='btn-success btn float-end my-2'>+</Button>
             )}
           {
             (isToken) && (
               <button className='rounded bg-warning btn float-end my-2 mx-2' onClick={() => listData(currentPage)}>Re</button>
             )}
+
         </div>
 
 
@@ -489,7 +552,8 @@ const page = () => {
                 // // console.log("INDEX : " + att.Image_cover.data)
                 return (
                   <tr key={index} >
-                    <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th>
+                    {/* <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th> */}
+                    <th scope="row">{e.id}</th>
                     <td>
                       {att.Image_cover.data == null &&
                         (<Image width={50} height={50} alt={"image ice"} src="/blank.png" className='border-none w-[100px] oneonone' />)}
@@ -511,7 +575,7 @@ const page = () => {
 
                       {
                         (isToken) && (
-                          <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop_edit" className='btn btn-warning m-2'>Edit</button>
+                          <Button variant="primary" onClick={()=>handle_btn_edit(e.id)} className='btn btn-warning'> EDIT </Button>
                         )
                       }
 
@@ -520,6 +584,7 @@ const page = () => {
                           <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop_del" className='btn btn-danger m-2'>Delete</button>
                         )
                       }
+
                     </td>
                   </tr>
 
@@ -572,7 +637,6 @@ const page = () => {
         |--------------------------------------------------
         */
       }
-
       <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -613,7 +677,6 @@ const page = () => {
       </div>
 
 
-
       {
         /**
         |--------------------------------------------------
@@ -621,47 +684,45 @@ const page = () => {
         |--------------------------------------------------
         */
       }
-      <div className="modal fade" id="staticBackdrop_edit" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} >
-            <div className="modal-header bg-warning  ">
-              <h5 className="modal-title" id="staticBackdropLabel">Edit </h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       <Modal show={modal_edit} onHide={()=>set_modal_edit(false)} backdrop="static">
+        <Modal.Header closeButton className='bg-warning'>
+          <Modal.Title>EDIT</Modal.Title>
+        </Modal.Header>
+        <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} >
+        <Modal.Body>
+          <div className='row' id="add_data" >
+            <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" required/> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control' required></textarea> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" required/> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Image </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg" /> </div>
+            <hr className='my-3' />
+
+            <div className="col-12">
+              {dataLoad && switch_image && (
+                <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
+              )}
+              {dataLoad && !switch_image && (
+                <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+              )}
+
             </div>
-            <div className="modal-body">
-              <div className='row' id="add_data" >
-                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" /> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control' ></textarea> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" /> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg" /> </div>
-                <hr className='my-3' />
-
-                <div className="col-12">
-                  {dataLoad && switch_image && (
-                    <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
-                  )}
-                  {dataLoad && !switch_image && (
-                    <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
-                  )}
-                </div>
-
-
-
-
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={removeImage}>Close</button>
-              <button type="submit" className="btn btn-warning" data-bs-dismiss="modal" disabled={! Title || !Description || !Excerpt  } >Update</button>
-            </div>
-          </form>
-        </div>
-      </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={removeImage}>
+            Close
+          </Button>
+          <Button variant="primary" type='submit' className='btn btn-warning'  disabled={btn}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+        </form>
+      </Modal>
 
       {
         /**
@@ -670,82 +731,86 @@ const page = () => {
         |--------------------------------------------------
         */
       }
-      <div className="modal fade" id="staticBackdrop_add" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div className="modal-dialog">
+       <Modal show={modal_add}  onHide={()=> set_modal_add(false)} backdrop="static">
+        <Modal.Header closeButton className='bg-success text-white'>
+          <Modal.Title >ADD DATA</Modal.Title>
+        </Modal.Header>
           <form className="modal-content" ref={allField} action={async (formData: FormData) => {
-
-              const img:any = formData.get('image')
-              if(img.name != ''){
-                const imgEx = getExtension(img.name)
-                if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
-                  Swal.fire({
-                    position: "center",
-                    icon: "error",
-                    title: "Type image incorrect",
-                    showConfirmButton: true
-                    // timer: 1500
-                  });
-                  return
-                }
-              }
-
-
-            let s = await Func_add_data(formData)
-            if (s == 200) {
-              setTimeout(() => {
-                listData(currentPage)
-                set_handle_image('')
-                set_atitle('')
-                set_aexe('')
-                set_ades('')
-
+            setTimeout(()=>set_btn(true),1)
+            set_btn(true)
+            const img:any = formData.get('image')
+            if(img.name != ''){
+              const imgEx = getExtension(img.name)
+              if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
                 Swal.fire({
                   position: "center",
-                  icon: "success",
-                  title: "Data was saved",
+                  icon: "error",  
+                  title: "Type image incorrect",
                   showConfirmButton: true
                   // timer: 1500
                 });
+                return
+              }
+            }
+
+            let s = await Func_add_data(formData)
+            if (s == 200) {
+            setTimeout(() => {
+              set_modal_add(false)
+              listData(currentPage)
+              set_handle_image('')
+              set_atitle('')
+              set_aexe('')
+              set_ades('')
+              set_btn(false)
+              Swal.fire({
+                position: "center",
+                icon: "success",
+                title: "Data was saved",
+                showConfirmButton: true
+                // timer: 1500
+              });
 
 
-              }, 100)
+            }, 100)
 
             }
             else {
-              // when failed to add stuff
-              // // // console.log('error')
+              set_btn(false)
+            // when failed to add stuff
+            // // // console.log('error')
             }
 
-          }} >
-            <div className="modal-header bg-success text-white ">
-              <h5 className="modal-title" id="staticBackdropLabel">Add data</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              <div className='row' id="add_data" >
-                <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={atitle} onChange={(e) => set_atitle(e.target.value)} className="form-control" /> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={ades} onChange={(e) => set_ades(e.target.value)} className='form-control' ></textarea> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" value={aexe} onChange={(e) => set_aexe(e.target.value)} className="form-control" /> </div>
-                <hr className='my-3' />
-                <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" value={handle_image} onChange={(e) => (set_handle_image(e.target.value) ,(e:any)=>{imageChange})} className="form-control" /> </div> 
-                <div className='col-12'>
-                  {dataLoad && (
+          }} >  
+        <Modal.Body>
 
-                    <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} />
+          <div className='row' id="add_data" >
+            <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={atitle} onChange={(e) => set_atitle(e.target.value)} className="form-control" required/> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={ades} onChange={(e) => set_ades(e.target.value)} className='form-control' required></textarea> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" value={aexe} onChange={(e) => set_aexe(e.target.value)} className="form-control" required/> </div>
+            <hr className='my-3' />
+            <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" id="0"  className="form-control"  accept=".png , .jpeg , .jpg" required/> </div> 
+            {/* <div className='col-12'>
+              {dataLoad && handle_image != '' && (
+                <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
 
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" className="btn btn-success" data-bs-dismiss="modal" disabled={!atitle || !ades || !aexe || !handle_image}>Add</button>
-            </div>
-          </form>
-        </div>
-      </div>
+              )}
+            </div> */}
+          </div>
+
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={()=>set_modal_add(false)}>
+            Close
+          </Button>
+          <Button variant="modal-add" type='submit' className='btn btn-success'  disabled={btn} >
+            ADD
+          </Button>
+        </Modal.Footer>
+        </form>
+      </Modal>
 
       {
         /**
