@@ -11,22 +11,12 @@ import Image from 'next/image'
 import { cookies } from 'next/headers'
 
 import { useForm } from 'react-hook-form';
-import * as yup from 'yup';
 
 import 'dotenv/config'
 import Modal from 'react-bootstrap/esm/Modal'
 import Button from 'react-bootstrap/esm/Button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 const KEYTOKEN = process.env.KEYTOKEN;
-
-
-
-const schema = yup.object().shape({
-  Title: yup.string().required('Name is required'),
-  Description: yup.string().email('Invalid email').required('Email is required'),
-  Excert:yup.string().email('Invalid email').required('Email is required'),
-});
-
 
 
 const page = () => {
