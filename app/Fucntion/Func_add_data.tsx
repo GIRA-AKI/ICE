@@ -40,13 +40,17 @@ const Func_add_data = async (formData:FormData) => {
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", "Bearer " + token?.value);
 
+    const today = new Date()
+    const date = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, '0')}`
+    const hours = `${today.getHours().toString().padStart(2, "0")}:${today.getMinutes().toString().padStart(2, "0")}:00.000Z`
+
     const raw = JSON.stringify({
         "data": {
           "Title": formData.get('Title'),
           "Description": formData.get('Description'),
           "Excerpt": formData.get('Excerpt'),
-          "Status": false,
-          "Date_publish": null
+          "Status": formData.get('Status'),
+          "Date_publish": (formData.get('Status') === "true") ? `${date}T${hours}` : null
         }
       });
 

@@ -10,12 +10,22 @@ import { Pagination, Stack } from '@mui/material'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
 
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+
 import 'dotenv/config'
 import Modal from 'react-bootstrap/esm/Modal'
 import Button from 'react-bootstrap/esm/Button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 const KEYTOKEN = process.env.KEYTOKEN;
 
+
+
+const schema = yup.object().shape({
+  Title: yup.string().required('Name is required'),
+  Description: yup.string().email('Invalid email').required('Email is required'),
+  Excert:yup.string().email('Invalid email').required('Email is required'),
+});
 
 
 
@@ -32,6 +42,7 @@ const page = () => {
   const [modal_edit, set_modal_edit] = useState(false);
   const [btn , set_btn] =useState(false)
 
+  const [errors , set_errors] = useState('')
   const [sort, set_sort] = useState<boolean>(false)
   const router = useRouter();
   const [data, setData] = useState<any>([])
@@ -57,6 +68,8 @@ const page = () => {
   const [selectedImage, setSelectedImage] = useState<any>('/blank.png')
   const [switch_image, set_switch_image] = useState<any>(false)
   const [handle_image , set_handle_image] = useState<string>('') 
+  const [ast , set_ast] = useState<string>('')
+
 
   const allIndex = async () => {
     const token = Cookies.get('token')
@@ -88,59 +101,34 @@ const page = () => {
       headers: myHeaders,
       redirect: "follow"
     };
-
-    if (page != 0) {
-
-      if(sort){
-        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + "&sort=id:desc" , requestOptions)
-        .then(res => res.json())
-        .then((d) => {
-          if (d.data == null) {
-            setData([])
-          } else {
-            setData(d.data)
-            allIndex()
-          }
-          SetdataLoad(true)
-        })
-      }
-      else{
-        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + "&sort=id:asc" , requestOptions)
-        .then(res => res.json())
-        .then((d) => {
-          if (d.data == null) {
-            setData([])
-          } else {
-            setData(d.data)
-            allIndex()
-          }
-          SetdataLoad(true)
-        })
-      }
+    console.log("current page is : : ",currentPage)
+    console.log("HERE IS page : : ", page)
+    if (currentPage != 0) {
+      console.log('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + `${sort ? "&sort=id:desc" : "&sort=id:asc" }`)
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + `${sort ? "&sort=id:desc" : "&sort=id:asc" }` , requestOptions)
+      .then(res => res.json())
+      .then((d) => {
+        if (d.data == null) {
+          setData([])
+        } else {
+          setData(d.data)
+          allIndex()
+        }
+        SetdataLoad(true)
+      })
 
     }
     else {
-      if(sort){
-        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + "&sort=id:desc"  , requestOptions).then(res => res.json()).then((d) => {
-          if (d.data == null) {
-            setData([])
-          } else {
-            setData(d.data)
-            allIndex()
-          }
-          SetdataLoad(true)
-        })
-      }else{
-        await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + "&sort=id:asc" , requestOptions).then(res => res.json()).then((d) => {
-          if (d.data == null) {
-            setData([])
-          } else {
-            setData(d.data)
-            allIndex()
-          }
-          SetdataLoad(true)
-        })
-      }
+      console.log('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + `${sort ? "&sort=id:desc" : "&sort=id:asc" }`)
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + `${sort ? "&sort=id:desc" : "&sort=id:asc" }` , requestOptions).then(res => res.json()).then((d) => {
+        if (d.data == null) {
+          setData([])
+        } else {
+          setData(d.data)
+          allIndex()
+        }
+        SetdataLoad(true)
+      })
 
     }
   }
@@ -264,8 +252,6 @@ const page = () => {
   const func_upload_image = async (imageRef: any, idRef: number | string) => {
 
     const token = Cookies.get('token')
-
-
     // const myHeaders = new Headers();
     // console.log("Here is "+KEYTOKEN)
     // myHeaders.append("Authorization", "Bearer "+{KEYTOKEN});
@@ -305,9 +291,37 @@ const page = () => {
     |--------------------------------------------------
     */}
   const func_edit = (formData: FormData) => {
+    let err = ""
+    const img:any = formData.get('image')
+    if(!formData.get('Title')){
+      console.log(formData.get('Title'))
+      err="Title is required!"
+    }else if(!formData.get('Description')){
+      console.log(formData.get('Description'))
+      err="Description is required!"
+    }else if(!formData.get('Excerpt')){
+      console.log(formData.get('Excerpt'))
+      err="Excerpt is required!"
+    }
+  
+    if(err != ''){
+      Swal.fire({
+        position: "center",
+        icon: "error",  
+        title: err,
+        showConfirmButton: true
+        // timer: 1500
+      });
+      console.log('errors should trigger')
+      return
+    }
+
+
+
+
+
     setTimeout(()=>set_btn(true),1)
     // const arr = ['png,jpeg,jpg']
-    const img:any = formData.get('image')
     if(img.name != ''){
       const imgEx = getExtension(img.name)
       if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
@@ -433,11 +447,13 @@ const page = () => {
 
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    console.log("this is your value : " , value)
     listData(value);
     set_currentPage(value)
   };
 
   const handleChangePage = async (
+    // not neccessory
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
@@ -465,6 +481,7 @@ const page = () => {
     set_modal_edit(true)
   }
 
+
   /**
   |--------------------------------------------------
   | preview image
@@ -491,6 +508,19 @@ const page = () => {
     moreMore(secret_id)
   }
 
+  const func_toggle = () =>{
+    if(sort == true){
+      set_sort(false)
+      allIndex()
+      listData()
+    }
+    else if(sort == false){
+      set_sort(true)
+      allIndex()
+      listData()
+    }
+  }
+
 
   return (
     <>
@@ -498,18 +528,7 @@ const page = () => {
       <div className="container p-5">
 
         <div className="  ">
-          <div className="btn btn-info" onClick={()=>{
-            if(sort == true){
-              set_sort(false)
-              allIndex()
-              listData()
-            }
-            else if(sort == false){
-              set_sort(true)
-              allIndex()
-              listData()
-            }
-          }}>Filter</div>
+          <div className="btn btn-info" onClick={func_toggle}>Filter</div>
           {
             (isToken) && (
               <Button variant="modal-add" onClick={()=>set_modal_add(true)} className='btn-success btn float-end my-2'>+</Button>
@@ -552,8 +571,8 @@ const page = () => {
                 // // console.log("INDEX : " + att.Image_cover.data)
                 return (
                   <tr key={index} >
-                    {/* <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th> */}
-                    <th scope="row">{e.id}</th>
+                    <th scope="row">{(index + 1) + (currentPage * rowsPerPage) - rowsPerPage}</th>
+                    {/* <th scope="row">{e.id}</th> */}
                     <td>
                       {att.Image_cover.data == null &&
                         (<Image width={50} height={50} alt={"image ice"} src="/blank.png" className='border-none w-[100px] oneonone' />)}
@@ -736,9 +755,37 @@ const page = () => {
           <Modal.Title >ADD DATA</Modal.Title>
         </Modal.Header>
           <form className="modal-content" ref={allField} action={async (formData: FormData) => {
+            let err = ""
+
+            const img:any = formData.get('image')
+            if(!formData.get('Title')){
+              console.log(formData.get('Title'))
+              err="Title is required!"
+            }else if(!formData.get('Description')){
+              console.log(formData.get('Description'))
+              err="Description is required!"
+            }else if(!formData.get('Excerpt')){
+              console.log(formData.get('Excerpt'))
+              err="Excerpt is required!"
+            }else if(img.name == ''){
+              err="image is required!"
+            }
+         
+            if(err != ''){
+              Swal.fire({
+                position: "center",
+                icon: "error",  
+                title: err,
+                showConfirmButton: true
+                // timer: 1500
+              });
+              console.log('errors should trigger')
+              return
+            }
+            
+            console.log('pass cuai')
             setTimeout(()=>set_btn(true),1)
             set_btn(true)
-            const img:any = formData.get('image')
             if(img.name != ''){
               const imgEx = getExtension(img.name)
               if(imgEx != "png" && imgEx != "jpeg" && imgEx != "jpg"){
@@ -791,6 +838,8 @@ const page = () => {
             <hr className='my-3' />
             <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" name="Excerpt" value={aexe} onChange={(e) => set_aexe(e.target.value)} className="form-control" required/> </div>
             <hr className='my-3' />
+            <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control"  onChange={(e) => set_ast(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
+            <hr className='my-3' />
             <div className='col-3 fw-bold' >Image  </div>         <div className='col-9 fw-normal'> <input type="file" name="image" id="0"  className="form-control"  accept=".png , .jpeg , .jpg" required/> </div> 
             {/* <div className='col-12'>
               {dataLoad && handle_image != '' && (
@@ -834,7 +883,7 @@ const page = () => {
                   <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
-                  <hr className='my-3' />
+                  <hr className='my-3' />   
                   <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
                   <hr className='my-3' />
                   <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
