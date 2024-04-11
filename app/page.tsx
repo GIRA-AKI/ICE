@@ -30,7 +30,10 @@ const page = () => {
   const [aexe , set_aexe] = useState<string>('')
   const [modal_add, set_modal_add] = useState(false);
   const [modal_edit, set_modal_edit] = useState(false);
+  const [modal_detail, set_modal_detail] = useState(false);
+  const [modal_del, set_modal_del] = useState(false);
   const [btn , set_btn] =useState(false)
+  const [isEmpty , set_isEmpty] = useState(false)
 
   const [errors , set_errors] = useState('')
   const [sort, set_sort] = useState<boolean>(false)
@@ -98,7 +101,7 @@ const page = () => {
       await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + `${sort ? "&sort=id:desc" : "&sort=id:asc" }` , requestOptions)
       .then(res => res.json())
       .then((d) => {
-        if (d.data == null) {
+        if (d.data == null) { 
           setData([])
         } else {
           setData(d.data)
@@ -150,11 +153,13 @@ const page = () => {
   |   detail function
   |--------------------------------------------------
   */
-  const moreMore = async (ID: any) => {
+  const moreMore = async (ID: any , mode:string = "none") => {
+    
+
     set_handle_image('')
     set_switch_image(false)
     set_setcret_id(ID)
-    setstatus_fetch(true);
+    setstatus_fetch(false);
     const token = Cookies.get('token')
 
     const myHeaders = new Headers();
@@ -168,6 +173,26 @@ const page = () => {
 
     const rem = await fetch(`https://dashboard.myhuahin.co/api/blogs/${ID}?populate=Image_cover`, requestOptions)
     const ram = await rem.json()
+    set_isEmpty(false)
+    rem.status == 200 ? set_isEmpty(false) : set_isEmpty(true)
+    if(mode == "detail"){ set_modal_detail(true)}
+    else if(mode == "del"){ set_modal_del(true)}
+    else if(mode == "edit"){ set_modal_edit(true)}
+    if(rem.status != 200 ){
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "Data not found",
+        showConfirmButton: true
+        // timer: 1500
+      });
+      listData(currentPage)
+      set_modal_add(false)
+      set_modal_edit(false)
+      set_modal_del(false)
+      set_modal_detail(false)
+      return
+    }
     set_id(ram?.data)
 
     setAtt(ram?.data?.attributes)
@@ -188,7 +213,8 @@ const page = () => {
     // // console.log("here it is : https://dashboard.myhuahin.co" + ram?.data?.attributes?.Image_cover?.data?.attributes?.formats?.thumbnail?.url)
 
     set_new_b(ram?.data?.attributes.Status)
-    setstatus_fetch(false);
+    setstatus_fetch(true);
+
   }
 
   {
@@ -223,7 +249,6 @@ const page = () => {
     setstatus_fetch(false);
 
     setTimeout(() => {
-      listData(currentPage)
       Swal.fire({
         position: "center",
         icon: "success",
@@ -231,7 +256,9 @@ const page = () => {
         showConfirmButton: true
         // timer: 1500
       });
+      listData(currentPage)
     }, 100)
+    set_modal_del(false)
   }
 
   /**
@@ -280,7 +307,7 @@ const page = () => {
     | Edit function
     |--------------------------------------------------
     */}
-  const func_edit = (formData: FormData) => {
+  const func_edit = async (formData: FormData) => {
     let err = ""
     const img:any = formData.get('image')
     if(!formData.get('Title')){
@@ -305,10 +332,6 @@ const page = () => {
       console.log('errors should trigger')
       return
     }
-
-
-
-
 
     setTimeout(()=>set_btn(true),1)
     // const arr = ['png,jpeg,jpg']
@@ -360,7 +383,7 @@ const page = () => {
           "Date_publish": (status === "true") ? `${date}T${hours}` : null
         }
       });
-
+btn
     }
     else {
       raw = JSON.stringify({
@@ -385,10 +408,21 @@ const page = () => {
       redirect: "follow"
     };
 
-    fetch("https://dashboard.myhuahin.co/api/blogs/" + secret_id, requestOptions)
-      .then((response) => response.text())
-      // // // .then((result) => console.log(result))
-      .catch((error) => console.error(error));
+    const res = await fetch("https://dashboard.myhuahin.co/api/blogs/" + secret_id, requestOptions)
+    if(res.status != 200 ){
+      set_modal_edit(false)
+      listData(currentPage)
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "ฮันแน่ ผมรู้ต้องลองท่านี้",
+        showConfirmButton: true
+        // timer: 1500
+      });
+      set_btn(false)
+      return
+    }
+
 
     setTimeout(() => {
       set_modal_edit(false)
@@ -467,7 +501,7 @@ const page = () => {
   }, [rowsPerPage])
 
   const handle_btn_edit = (id:number) => {
-    moreMore(id)
+    moreMore(id,"edit")
     set_modal_edit(true)
   }
 
@@ -490,7 +524,6 @@ const page = () => {
       }
     }
   }
-
 
   const removeImage = () => {
     set_modal_edit(false)
@@ -580,7 +613,11 @@ const page = () => {
                     </td>
                     <td>{formatDateTH(att?.Date_publish)}</td>
                     <td className='w-[300px]' >
-                      <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop" className='btn btn-info m-2'>Info</button>
+                      {
+                        (isToken) && (
+                          <button type="button" onClick={() => { moreMore(e.id,"detail") }} className='btn btn-info m-2'>Info</button>
+                        )
+                      }
 
                       {
                         (isToken) && (
@@ -590,7 +627,7 @@ const page = () => {
 
                       {
                         (isToken) && (
-                          <button type="button" onClick={() => { moreMore(e.id) }} data-bs-toggle="modal" data-bs-target="#staticBackdrop_del" className='btn btn-danger m-2'>Delete</button>
+                          <button type="button" onClick={() => { moreMore(e.id,"del") }}  className='btn btn-danger m-2'>Delete</button>
                         )
                       }
 
@@ -611,15 +648,14 @@ const page = () => {
 
             {data.length == 0 && dataLoad == true && (
               <tr>
-                <td colSpan={8}>Not founded data</td>
+                <td colSpan={8}>Data empty</td>
               </tr>
             )}
 
           </tbody>
         </table>
 
-
-        {dataLoad && (
+        {dataLoad == true && data.length != 0 && (
           <div className='flex w-fit mx-auto items-center'>
             <label htmlFor="" className='w-fit pb-1'>จำนวนข้อมูล</label>
             <TablePagination
@@ -646,44 +682,47 @@ const page = () => {
         |--------------------------------------------------
         */
       }
-      <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header bg-info ">
-              <h5 className="modal-title" id="staticBackdropLabel">Detail</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <Modal
+        show={modal_detail}
+        onHide={()=>set_modal_detail(false)}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header closeButton className='bg-info'>
+          <Modal.Title>Detail</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {status_fetch == true && isEmpty == false && (
+            <div className='row'>
+              <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'>
+                {(status.toString() == "true") ? "Published" : "Unpublished"}
+              </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
+              <div className='col-12'>
+                {dataLoad && (
+                  <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                )}
+              </div>
             </div>
-            <div className="modal-body">
-              {status_fetch == false && (
-                <div className='row'>
-                  <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'>
-                    {(status.toString() == "true") ? "Published" : "Unpublished"}
-                  </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >createdAt  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
-                  <div className='col-12'>
-                    {dataLoad && (
-                      <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
-                    )}
-                  </div>
-                </div>
-              )
-              }
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
+          )
+          }
+          {status_fetch == false && (
+            <div className='h-screen  grid justify-center content-center items-center text-xl'>Loading ... </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={()=>set_modal_detail(false)} className="btn btn-secondary" >Close</Button>
+        </Modal.Footer>
+      </Modal>
 
 
       {
@@ -699,40 +738,47 @@ const page = () => {
         </Modal.Header>
         <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} >
         <Modal.Body>
-          <div className='row' id="add_data" >
-            <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" required/> </div>
-            <hr className='my-3' />
-            <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control' required></textarea> </div>
-            <hr className='my-3' />
-            <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" required/> </div>
-            <hr className='my-3' />
-            <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
-            <hr className='my-3' />
-            <div className='col-3 fw-bold' >Image </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg" /> </div>
-            <hr className='my-3' />
+          {status_fetch == true && isEmpty == false &&(
+            <div className='row' id="add_data" >
+              <div className='col-3 fw-bold' >Title  </div>   <div className='col-9 fw-normal'> <input type="text" name="Title" value={Title} onChange={(e) => set_Title(e.target.value)} id="" className="form-control" required/> </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'> <textarea name="Description" value={Description} onChange={(e) => set_Description(e.target.value)} id="" className='form-control' required></textarea> </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Excerpt  </div>         <div className='col-9 fw-normal'> <input type="text" value={Excerpt} onChange={(e) => set_Excerpt(e.target.value)} name="Excerpt" id="" className="form-control" required/> </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Status  </div>       <div className='col-9 fw-normal'> <select name="Status" id="" className="form-control" value={status} onChange={(e) => set_status(e.target.value)} > <option value="false" >Unpublished</option> <option value="true">Published</option>  </select> </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Image </div>         <div className='col-9 fw-normal'> <input type="file" onChange={imageChange} name="image" id="" className="form-control"  accept=".jpg,.png,.jpeg" /> </div>
+              <hr className='my-3' />
 
-            <div className="col-12">
-              {dataLoad && switch_image && (
-                <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
-              )}
-              {dataLoad && !switch_image && (
-                <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
-              )}
+              <div className="col-12">
+                {dataLoad && switch_image && (
+                  <Image width={200} height={200} alt={"image ice"} src={URL.createObjectURL(new Blob([selectedImage], { type: "application/*" }))} className='mx-auto oneonone m-5'/>
+                )}
+                {dataLoad && !switch_image && (
+                  <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                )}
 
+              </div>
             </div>
-          </div>
+          )}
+          {status_fetch == false && (
+              <div className='h-screen  grid justify-center content-center items-center text-xl'>Loading ... </div>
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={removeImage} disabled={btn}>
             Close
           </Button>
-          <Button variant="primary" type='submit' className='btn btn-warning'  disabled={btn}>
-            Save Changes
-          </Button>
+          {status_fetch == true && isEmpty == false && (
+            <Button variant="primary" type='submit' className='btn btn-warning'  disabled={btn}>
+              Save Changes
+            </Button>
+          )}
         </Modal.Footer>
         </form>
       </Modal>
-
+btn
       {
         /**
         |--------------------------------------------------
@@ -858,42 +904,48 @@ const page = () => {
         |--------------------------------------------------
         */
       }
-      <div className="modal fade" id="staticBackdrop_del" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header bg-danger text-white ">
-              <h5 className="modal-title" id="staticBackdropLabel">Delete !</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              {status_fetch == false && (
-                <div className='row'>
-                  <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
-                  <hr className='my-3' />   
-                  <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
-                  <hr className='my-3' />
-                  <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
-                  <div className="col-12">
-                    {dataLoad && (
-                      <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
-                    )}
-                  </div>
+       <Modal
+        show={modal_del}
+        onHide={()=>set_modal_del(false)}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header closeButton className='bg-danger'>
+          <Modal.Title className='text-white ' >
+         Delete !
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {status_fetch == true && (
+            <div className='row'>
+              <div className='col-3 fw-bold' >Title  </div>         <div className='col-9 fw-normal'>  {att.Title} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Description  </div>   <div className='col-9 fw-normal'>  {att.Description} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >Excerpt  </div>       <div className='col-9 fw-normal'>  {att.Excerpt} </div>
+              <hr className='my-3' />   
+              <div className='col-3 fw-bold' >Date publish  </div>   <div className='col-9 fw-normal'>  {formatDateTH(att.Date_publish)} </div>
+              <hr className='my-3' />
+              <div className='col-3 fw-bold' >createdAt  </div>     <div className='col-9 fw-normal'>  {formatDateTH(att.createdAt)} </div>
+              <div className="col-12">
+                {dataLoad && (
+                  <Image width={200} height={200} alt={"image ice"} src={selectedImage} className='mx-auto oneonone m-5'/>
+                )}
+              </div>
 
-                </div>
-              )
-              }
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" className="btn btn-danger" onClick={() => { func_delete(secret_id) }} data-bs-dismiss="modal">Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
+          )}
+          {status_fetch == false && (
+            <div className='h-screen  grid justify-center content-center items-center text-xl'>Loading ... </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="btn btn-secondary" onClick={()=>set_modal_del(false)}>Close</button>
+          {status_fetch == true && isEmpty == false &&(
+            <button type="button" className="btn btn-danger" onClick={() => { func_delete(secret_id) }} data-bs-dismiss="modal">Delete</button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
     </>
   )
