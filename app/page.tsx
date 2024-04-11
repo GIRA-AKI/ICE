@@ -15,7 +15,6 @@ import { useForm } from 'react-hook-form';
 import 'dotenv/config'
 import Modal from 'react-bootstrap/esm/Modal'
 import Button from 'react-bootstrap/esm/Button'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 const KEYTOKEN = process.env.KEYTOKEN;
 
 
@@ -34,6 +33,8 @@ const page = () => {
   const [modal_del, set_modal_del] = useState(false);
   const [btn , set_btn] =useState(false)
   const [isEmpty , set_isEmpty] = useState(false)
+
+  const [new_data , set_new_data] = useState<any>()
 
   const [errors , set_errors] = useState('')
   const [sort, set_sort] = useState<boolean>(false)
@@ -97,14 +98,19 @@ const page = () => {
     console.log("current page is : : ",currentPage)
     console.log("HERE IS page : : ", page)
     if (currentPage != 0) {
-      console.log('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + `${sort ? "&sort=id:desc" : "&sort=id:asc" }`)
-      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page + `${sort ? "&sort=id:desc" : "&sort=id:asc" }` , requestOptions)
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + '&pagination[page]=' + page  , requestOptions)
       .then(res => res.json())
       .then((d) => {
         if (d.data == null) { 
           setData([])
         } else {
-          setData(d.data)
+
+          if(sort){
+            setData(d.data.toReversed())
+          }
+          else{
+            setData(d.data)
+          }
           allIndex()
         }
         SetdataLoad(true)
@@ -112,17 +118,20 @@ const page = () => {
 
     }
     else {
-      console.log('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + `${sort ? "&sort=id:desc" : "&sort=id:asc" }`)
-      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*' + `${sort ? "&sort=id:desc" : "&sort=id:asc" }` , requestOptions).then(res => res.json()).then((d) => {
+      await fetch('https://dashboard.myhuahin.co/api/blogs/?pagination[pageSize]=' + rowsPerPage + '&populate=*'  , requestOptions).then(res => res.json()).then((d) => {
         if (d.data == null) {
           setData([])
         } else {
-          setData(d.data)
+          if(sort){
+            setData(d.data.toReversed())
+          }
+          else{
+            setData(d.data)
+          }
           allIndex()
         }
         SetdataLoad(true)
       })
-
     }
   }
 
@@ -187,6 +196,7 @@ const page = () => {
         // timer: 1500
       });
       listData(currentPage)
+
       set_modal_add(false)
       set_modal_edit(false)
       set_modal_del(false)
@@ -533,15 +543,20 @@ btn
 
   const func_toggle = () =>{
     if(sort == true){
-      set_sort(false)
       allIndex()
-      listData()
+      setTimeout(()=>{
+        set_sort(false)
+      },100)
+      listData(currentPage)
     }
     else if(sort == false){
-      set_sort(true)
       allIndex()
-      listData()
+      setTimeout(()=>{
+        set_sort(true)
+      },100)
+      listData(currentPage)
     }
+    console.log("sort is >>>>>>>>>" , sort , "<<<<<<<<<<")
   }
 
 
@@ -551,7 +566,17 @@ btn
       <div className="container p-5">
 
         <div className="  ">
-          <div className="btn btn-info" onClick={func_toggle}>Filter</div>
+          {sort && (
+            <div className="btn text-xxl" onClick={func_toggle}>
+              ↑
+            </div>
+          )}
+          {!sort && (
+            <div className="btn text-xxl" onClick={func_toggle}>
+              ↓
+            </div>
+          )}
+
           {
             (isToken) && (
               <Button variant="modal-add" onClick={()=>set_modal_add(true)} className='btn-success btn float-end my-2'>+</Button>
@@ -587,9 +612,8 @@ btn
                 </th>
               </tr>
             )}
-
             {data.length > 0 && dataLoad == true && (
-              data.map((e: any, index: number) => {
+              data.toReversed().map((e: any, index: number) => {
                 const att = e?.attributes
                 // // console.log("INDEX : " + att.Image_cover.data)
                 return (
@@ -778,7 +802,7 @@ btn
         </Modal.Footer>
         </form>
       </Modal>
-btn
+
       {
         /**
         |--------------------------------------------------
