@@ -723,7 +723,7 @@ const page = () => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={removeImage}>
+          <Button variant="secondary" onClick={removeImage} disabled={btn}>
             Close
           </Button>
           <Button variant="primary" type='submit' className='btn btn-warning'  disabled={btn}>
@@ -841,7 +841,7 @@ const page = () => {
 
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={()=>set_modal_add(false)}>
+          <Button variant="secondary" onClick={()=>set_modal_add(false)} disabled={btn}> 
             Close
           </Button>
           <Button variant="modal-add" type='submit' className='btn btn-success'  disabled={btn} >
