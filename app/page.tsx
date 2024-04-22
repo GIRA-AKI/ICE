@@ -483,6 +483,7 @@ btn
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     console.log("this is your value : " , value)
     listData(value);
+    set_sort(false)
     set_currentPage(value)
   };
 
