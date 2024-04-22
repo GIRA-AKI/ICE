@@ -3,18 +3,6 @@ import ServerAction from './ServerAction';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertTitle, FormControl, IconButton, Input, InputAdornment, InputLabel, TextField } from '@mui/material';
-import Swal from 'sweetalert2';
-
-
-// import AccessAlarmRounded from '@mui/icons-material/AccessAlarmRounded';
-// import VisibilityIcon from '@mui/icons-material/Visibility';
-
-// const Get_token =  () => {
-//     const cookieStore = cookies()
-//     const theme = cookieStore.get('token')
-//     console.log(theme)
-// }
-
 
 interface Message {
     message : string
@@ -28,29 +16,31 @@ const page = () => {
     const [state ,setState] = useState<any>({})
     const route = useRouter()
     const [active , set_active] = useState<boolean>(false)
-    // console.log(cookies.get('token'))
-
-    // useEffect(()=>{
-    //     console.log("fd"+status)
-    // },[status])
 
   return (
     <>
-    
+        <div className='pl-[100px] py-[100px] absolute'>
+            <span className='bg-slate-300 p-1 rounded'>username  </span><p>iceiiiii1998@gmail.com</p>
+            <span className='bg-slate-300 p-1 rounded'> password  </span><p>!Apong64150123.</p>
+        </div>
+
         <div className='w-full absolute top-0'>
 
             { (state.status == 500) && (
             <Alert severity="warning" className='w-full'>
                 {state.message}
-            </Alert>) }
-
+                
+            </Alert>) 
+            
+            }
+               
             { (state.status == 200) && (
             <Alert severity="success" className='w-full'>
                 {state.message}
             </Alert>) }
 
         </div>
-        <div className='w-[350px] mx-auto my-5'>
+        <div className='w-[350px] mx-auto my-[115px]'>
 
             <form action={ async (formData:FormData) => {
                 // wait to get data from ServerAction
@@ -99,6 +89,7 @@ const page = () => {
                     }}
                     />
                 </div>
+                
                 <div className="input-field">
                     <button type="submit" className='btn btn-primary  float-end' disabled={active} onClick={()=>setTimeout(()=>set_active(true),1)}> Login</button>
                 </div>

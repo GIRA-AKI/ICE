@@ -6,6 +6,7 @@ import { CookiesProvider } from 'next-client-cookies/server';
 import Head from 'next/head';
 import { Suspense } from "react";
 import Loading from "./loading";
+import { ToastContainer } from "react-toastify";
 
 
 const inter = Inter({ subsets: ["latin"] });

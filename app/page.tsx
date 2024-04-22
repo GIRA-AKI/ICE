@@ -8,9 +8,8 @@ import Cookies from 'js-cookie'
 import TablePagination from '@mui/material/TablePagination';
 import { Pagination, Stack } from '@mui/material'
 import Image from 'next/image'
-import { cookies } from 'next/headers'
+import { ToastContainer, toast } from 'react-toastify';
 
-import { useForm } from 'react-hook-form';
 
 import 'dotenv/config'
 import Modal from 'react-bootstrap/esm/Modal'
@@ -568,13 +567,13 @@ btn
 
         <div className="  ">
           {sort && (
-            <div className="btn text-xxl" onClick={func_toggle}>
-              ↑
+            <div className="btn border-1 border text-xxl" onClick={func_toggle}>
+              order by
             </div>
           )}
           {!sort && (
-            <div className="btn text-xxl" onClick={func_toggle}>
-              ↓
+            <div className="btn border-1 border  text-xxl" onClick={func_toggle}>
+              order by
             </div>
           )}
 
@@ -713,7 +712,7 @@ btn
         backdrop="static"
         keyboard={false}
       >
-        <Modal.Header closeButton className='bg-info'>
+        <Modal.Header  className='bg-info'>
           <Modal.Title>Detail</Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -758,7 +757,7 @@ btn
         */
       }
        <Modal show={modal_edit} onHide={()=>set_modal_edit(false)} backdrop="static">
-        <Modal.Header closeButton className='bg-warning'>
+        <Modal.Header  className='bg-warning'>
           <Modal.Title>EDIT</Modal.Title>
         </Modal.Header>
         <form className="modal-content" action={(formData: FormData) => { func_edit(formData) }} >
@@ -812,7 +811,7 @@ btn
         */
       }
        <Modal show={modal_add}  onHide={()=> set_modal_add(false)} backdrop="static">
-        <Modal.Header closeButton className='bg-success text-white'>
+        <Modal.Header  className='bg-success text-white'>
           <Modal.Title >ADD DATA</Modal.Title>
         </Modal.Header>
           <form className="modal-content" ref={allField} action={async (formData: FormData) => {
@@ -935,7 +934,7 @@ btn
         backdrop="static"
         keyboard={false}
       >
-        <Modal.Header closeButton className='bg-danger'>
+        <Modal.Header  className='bg-danger'>
           <Modal.Title className='text-white ' >
          Delete !
           </Modal.Title>
